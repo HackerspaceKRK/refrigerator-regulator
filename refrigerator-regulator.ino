@@ -1,107 +1,82 @@
-#include <OneWire.h>
-#include <DallasTemperature.h>
-#include <Adafruit_SleepyDog.h>
-#include "config.h"
+#include <Arduino_FreeRTOS.h>
+#include <LiquidCrystal.h>
+#include "Buttons.hpp"
+#include "Relays.hpp"
+#include "TemperatureSensor.hpp"
+#include "PowerRegulation.hpp"
+#include "FridgeRegulator.hpp"
+#include "config.hpp"
+#include "LCD.hpp"
 
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature sensors(&oneWire);
+#if defined(__AVR_ATmega2560__)
+const int TASK_STACK_SMALL = 64;
+const int TASK_STACK_HUGE = 256;
+#else
+#error It won't fit...
+#endif
 
-enum states {
-  IDLING, COOLING
-};
 
-int state = IDLING;
-int state_change_time = 0;
-float current_temperature = 0;
+void setup() {
+     Serial.begin(115200);
+     Serial.println("# Refrigerator Regulator!");
+     Serial.println();
 
-void setup(void)
-{
-  Serial.begin(115200);
-  Serial.println("# Refrigerator Regulator!");
-  Serial.println();
 
-  pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW);
+  xTaskCreate(
+    TaskTemperatureSensor
+    ,  NULL
+    ,  TASK_STACK_HUGE
+    ,  NULL
+    ,  1
+    ,  NULL );
 
-  Watchdog.enable(interval * 3);
-  
-  sensors.begin();
+  xTaskCreate(
+    TaskPowerRegulation
+    ,  NULL
+    ,  TASK_STACK_SMALL
+    ,  NULL
+    ,  2
+    ,  NULL );
 
-  print_csv_header();
+  xTaskCreate(
+    TaskReadButtons
+    ,  NULL
+    ,  TASK_STACK_SMALL
+    ,  NULL
+    ,  2  // Priority
+    ,  NULL );
+
+  xTaskCreate(
+    TaskRelays
+    ,  NULL
+    ,  TASK_STACK_SMALL
+    ,  NULL
+    ,  3  // Priority
+    ,  NULL );
+
+  xTaskCreate(
+    TaskRefrigeratorRegulator
+    ,  NULL
+    ,  TASK_STACK_SMALL
+    ,  NULL
+    ,  3  // Priority
+    ,  NULL );
+
+
+  xTaskCreate(
+    TaskPrintToLCD
+    ,  NULL
+    ,  TASK_STACK_HUGE
+    ,  NULL
+    ,  0  // Priority
+    ,  NULL );
+
 }
 
+float current_temperature = 0.0;
+int lcd_key = btnNONE;
 
-void go_cooling(){
-  Serial.println("# REFRIGERATOR IS GOING ON!");
-  state = COOLING;
-  digitalWrite(RELAY_PIN, HIGH);
-  state_change_time = millis();
-}
+byte relay_states[] = {LOW, HIGH, LOW, LOW};
 
-void go_idling(){
-  Serial.println("# REFRIGERATOR IS GOING OFF!");
-  state = IDLING;
-  digitalWrite(RELAY_PIN, LOW);
-  state_change_time = millis();
-}
-
-
-void print_csv_header(){
-  Serial.println("time_from_start,time_in_current_state,temperature,state");
-}
-
-void print_status_as_csv(){
-  Serial.print(millis() / 1000);
-  Serial.print(',');
-  Serial.print((millis() - state_change_time) / 1000);
-  Serial.print(',');
-  Serial.print(current_temperature);
-  Serial.print(',');
-  if(state == IDLING){
-    Serial.println("0");
-  }else if(state == COOLING){
-    Serial.println("1");
-  }
-}
-
-void print_status_as_text(){
-  Serial.print("# Time from start: ");
-  Serial.println(millis() / 1000);
-
-  Serial.print("# Time in current state: ");
-  Serial.println((millis() - state_change_time) / 1000);
-  
-  Serial.print("# Current temperature: ");
-  Serial.println(current_temperature);
-
-  if (state == IDLING){
-    Serial.println("# Current state: IDLING");
-  } else if (state == COOLING) {
-    Serial.println("# Current state: COOLING");
-  }
-  Serial.println();
-}
-
-void loop(void)
-{ 
-  Watchdog.reset();
-
-  sensors.requestTemperatures();
-  current_temperature = sensors.getTempCByIndex(0);
-
-  print_status_as_csv();
-  print_status_as_text();
-  
-  if (state == IDLING){
-    if (current_temperature > temperature_high_threshold) {
-      go_cooling();
-    }
-    
-  } else if (state == COOLING) {
-    if (current_temperature < temperature_low_threshold) {
-      go_idling();
-    }
-  }
-  
-  delay(interval);
+void loop() {
 }
