@@ -7,7 +7,7 @@ extern byte pwmLevel;
 
 
 inline void setPwmFrequency() {
-    TCCR2B = TCCR2B & 0b11111000 | 0x01;
+    TCCR3B = TCCR3B & 0b11111000 | 0x01;
 }
 
 void TaskPowerRegulation(void *pvParameters)
