@@ -12,7 +12,7 @@
 const int TASK_STACK_SMALL = 64;
 const int TASK_STACK_HUGE = 256;
 #else
-#error It won't fit...
+#error It wont fit...
 #endif
 
 
@@ -76,7 +76,7 @@ void setup() {
 float current_temperature = 0.0;
 int lcd_key = btnNONE;
 
-byte relay_states[] = {LOW, HIGH, LOW, LOW};
+byte relay_states[] = {LOW, LOW, LOW, LOW};
 
 void loop() {
 }
