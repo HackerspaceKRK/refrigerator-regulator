@@ -9,7 +9,7 @@ enum states {
 };
 
 int state = IDLING;
-int state_change_time = 0;
+long state_change_time = 0;
 
 extern float current_temperature;
 
@@ -20,7 +20,7 @@ bool can_cool(){
 }
 
 bool fridge_rested(){
-  return state_change_time == 0 or ((millis() - state_change_time) > 600000L);
+  return state_change_time == 0 or ((millis() - state_change_time) > fridge_cycle_time);
 }
 
 bool can_disable_pump(){
