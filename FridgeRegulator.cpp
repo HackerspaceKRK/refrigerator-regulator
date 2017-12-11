@@ -49,7 +49,7 @@ void TaskRefrigeratorRegulator(void *pvParameters)
     for(;;){
       if(can_cool()){
         if (state == IDLING) {
-          if (current_temperature > temperature_high_threshold and fridge_rested()) {
+          if (cooling_enabled and current_temperature > temperature_high_threshold and fridge_rested()) {
             go_cooling();
           }
         } else if (state == COOLING) {
@@ -63,5 +63,3 @@ void TaskRefrigeratorRegulator(void *pvParameters)
       vTaskDelay(5000 / portTICK_PERIOD_MS);
   }
 }
-  
-

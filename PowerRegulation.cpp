@@ -3,7 +3,7 @@
 #include "config.hpp"
 #include "PowerRegulation.hpp"
 
-extern byte pwmLevel;
+byte pwmLevel = 70;
 
 
 inline void setPwmFrequency() {
@@ -20,7 +20,7 @@ void TaskPowerRegulation(void *pvParameters)
     for(;;){
       analogWrite(
           power_regulation_pin,
-          map(pwmLevel, 0, 100, 255, 0)
+          map(pwmLevel, 0, 100, lower_power_limit, upper_power_limit)
       );
       vTaskDelay(60 / portTICK_PERIOD_MS);
   }

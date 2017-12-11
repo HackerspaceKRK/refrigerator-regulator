@@ -4,6 +4,7 @@
 #include "Relays.hpp"
 #include "TemperatureSensor.hpp"
 #include "PowerRegulation.hpp"
+#include "ExtractorRegulator.hpp"
 #include "FridgeRegulator.hpp"
 #include "config.hpp"
 #include "LCD.hpp"
@@ -20,7 +21,6 @@ void setup() {
      Serial.begin(115200);
      Serial.println("# Refrigerator Regulator!");
      Serial.println();
-
 
   xTaskCreate(
     TaskTemperatureSensor
@@ -62,11 +62,19 @@ void setup() {
     ,  3  // Priority
     ,  NULL );
 
+    xTaskCreate(
+      TaskExtractorRegulator
+      ,  NULL
+      ,  TASK_STACK_SMALL
+      ,  NULL
+      ,  3  // Priority
+      ,  NULL );
+
 
   xTaskCreate(
     TaskPrintToLCD
     ,  NULL
-    ,  TASK_STACK_HUGE
+    ,  TASK_STACK_HUGE*2
     ,  NULL
     ,  0  // Priority
     ,  NULL );
@@ -75,8 +83,12 @@ void setup() {
 
 float current_temperature = 0.0;
 int lcd_key = btnNONE;
+int laser_active = 0;
+bool force_extraction = false;
+bool venting_confiirmed = false;
+bool powering_off = false;
 
-byte relay_states[] = {LOW, LOW, LOW, LOW};
+byte relay_states[] = {LOW, HIGH, LOW, LOW};
 
 void loop() {
 }
